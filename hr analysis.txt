@@ -1,0 +1,300 @@
+*******Employee data analysis using MySql and visualization with Power BI*********
+
+select * from hrm;
+ALTER TABLE hrm
+add column age int;
+-------------------------------------------------------------------------------------
+UPDATE hrm
+SET age = timestampdiff(YEAR, birthdate, CURDATE());
+select birthdate, age From hrm;
+-----------------------------------------------------------------------------------------
+Birthdate      Age
+1991-06-04	32
+1984-06-29	39
+1989-07-29	33
+1982-09-14	40
+1994-04-11	29
+-----------------------------------------------------------------------------------------
+SELECT 
+	min(age) AS youngest,
+    max(age) AS oldest
+FROM hrm;
+-------------------------------------------------------------------------------------------
+  youngest    oldest
+    20          57
+------------------------------------------------------------------------------------------
+SELECT count(*) FROM hrm WHERE age < 18;
+-------------------------------------------------------------------------------------------
+count(*)
+0
+-------------------------------------------------------------------------------------------
+1. gender breakdown of employees
+_______________________________________________________________________________________
+select gender, count(*) AS count
+from hrm
+where age >=18 and termdate = '0000-00-00'
+group by gender;
+-----------------------------------------------------------------------------
+ gender        count
+ Male	        9328
+ Female	        8455
+ Non-Conforming	502
+______________________________________________________________________________
+2.r/e brkdown
+-------------------------------------------------------------------------------
+select race, count(*) as count
+from hr
+where age >=18 and termdate = '0000-00-00'
+group by race
+order by count(*) desc;
+_____________________________________________________________________
+3. emp age distribution
+
+SELECT 
+	min(age) AS youngest,
+    max(age) AS oldest
+FROM hrm;
+-----------------------------------------------------------------------------
+youngest   oldest
+  20         57
+______________________________________________________________________________________
+4. Eployee count by age group
+
+select 
+   case
+    when age >= 18 and age <= 35 then '18-35' 
+    when age > 35 and age <= 54  then '36-54'
+    else '55+'
+    end as age_group,
+    count(*) as count
+from hrm
+where age >= 18 and termdate = '0000-00-00'
+group by age_group
+order by age_group;
+-----------------------------------------------------------------------------------------
+ age_group  count
+  18-35	     7570
+  36-54	     9398
+   55+	     1317
+___________________________________________________________________________________________
+5. gender based employee count
+
+select 
+   case
+    when age >= 18 and age <= 35 then '18-35' 
+    when age > 35 and age <= 54  then '36-54'
+    else '55+'
+    end as age_group,
+    count(*) as count, gender
+from hrm
+where age >= 18 and termdate = '0000-00-00'
+group by age_group, gender
+order by age_group, gender;
+---------------------------------------------------------------------------------------------
+age-group count gender
+18-35	3548	Female
+18-35	3814	Male
+18-35	208	Non-Conforming
+36-54	4286	Female
+36-54	4854	Male
+36-54	258	Non-Conforming
+55+	621	Female
+55+	660	Male
+55+	36	Non-Conforming
+
+__________________________________________________________________________________________
+6. employee location 
+
+SELECT location,COUNT(*) as count
+FROM hrm
+WHERE age >= 18 and termdate = '0000-00-00'
+group by location;  
+-----------------------------------------------------------------------------------------
+ location       count
+Headquarters	13710
+Remote	         4575
+_______________________________________________________________________________________
+7. average employment length
+
+SELECT ROUND(AVG(DATEDIFF(termdate, hire_date))/365,0) AS avg_length_of_employment
+FROM hrm
+WHERE termdate <> '0000-00-00' AND termdate <= CURDATE() AND age >= 18;
+--------------------------------------------------------------------------------
+avg length
+   8
+__________________________________________________________________________________________
+8. gender distribution accross depts
+
+SELECT department, gender, COUNT(*) as count
+FROM hrm
+WHERE age >= 18
+GROUP BY department, gender
+ORDER BY department;
+-------------------------------------------------------------------------------
+dept          gender    count
+Accounting	Female	1531
+Accounting	Male	1711
+Accounting	Non-Conforming	91
+Auditing	Female	24
+Auditing	Male	28
+Business Development	Female	757
+Business Development	Male	836
+Business Development	Non-Conforming	49
+Engineering	Female	3120
+Engineering	Male	3373
+Engineering	Non-Conforming	193
+Human Resources	Female	861
+.
+.
+.
+__________________________________________________________________________________________
+
+9. What is the distribution of job titles across the company?
+
+SELECT jobtitle, COUNT(*) as count
+FROM hr
+WHERE age >= 18
+GROUP BY jobtitle
+ORDER BY jobtitle DESC;
+------------------------------------------------------------------------------
+ jobtitle              count
+Web Developer IV	66
+Web Developer III	71
+Web Developer II	77
+Web Developer I	99
+Web Designer IV	8
+Web Designer III	13
+Web Designer II	4
+.
+.
+.
+.
+Account Executive	505
+Account Coordinator	2
+_________________________________________________________________________
+
+10. Distribution of employees across locations by state?
+
+SELECT location_state, COUNT(*) as count
+FROM hrm
+WHERE age >= 18
+GROUP BY location_state
+ORDER BY count DESC;
+---------------------------------------------------------------------------
+ location_state     count
+Ohio	          18025
+Pennsylvania	  1115
+Illinois	  868
+Indiana	          700
+Michigan	  673
+Kentucky	  451
+Wisconsin	  382
+
+______________________________________________________________________________________________________
+11. How has the company's employee count changed over time based on hire and term dates?
+
+SELECT 
+    YEAR(hire_date) AS year, 
+    COUNT(*) AS hires, 
+    SUM(CASE WHEN termdate <> '0000-00-00' AND termdate <= CURDATE() THEN 1 ELSE 0 END) AS terminations, 
+    COUNT(*) - SUM(CASE WHEN termdate <> '0000-00-00' AND termdate <= CURDATE() THEN 1 ELSE 0 END) AS net_change,
+    ROUND(((COUNT(*) - SUM(CASE WHEN termdate <> '0000-00-00' AND termdate <= CURDATE() THEN 1 ELSE 0 END)) / COUNT(*) * 100),2) AS net_change_percent
+FROM 
+    hr
+WHERE age >= 18
+GROUP BY 
+    YEAR(hire_date)
+ORDER BY 
+    YEAR(hire_date) ASC;
+------------------------------------------------------------------------------------------------------------------
+year    hire terminate net_change nt_chng_perc
+2000	220	31	189	85.91
+2001	1122	203	919	81.91
+2002	1067	173	894	83.79
+2003	1142	192	950	83.19
+2004	1135	195	940	82.82
+2005	1097	173	924	84.23
+2006	1118	175	943	84.35
+2007	1090	142	948	86.97
+2008	1108	139	969	87.45
+2009	1140	144	996	87.37
+2010	1099	123	976	88.81
+2011	1101	112	989	89.83
+2012	1103	105	998	90.48
+2013	1105	92	1013	91.67
+2014	1053	85	968	91.93
+2015	1059	70	989	93.39
+2016	1122	62	1060	94.47
+2017	1091	50	1041	95.42
+2018	1147	43	1104	96.25
+2019	1083	42	1041	96.12
+2020	1012	20	992	98.02
+
+
+-----------------or----------------
+In this modified query, a subquery is used to first calculate the terminations alias, which is then used in the calculation for the net_change and net_change_percent column in the outer query.
+
+SELECT 
+    year, 
+    hires, 
+    terminations, 
+    (hires - terminations) AS net_change,
+    ROUND(((hires - terminations) / hires * 100), 2) AS net_change_percent
+FROM (
+    SELECT 
+        YEAR(hire_date) AS year, 
+        COUNT(*) AS hires, 
+        SUM(CASE WHEN termdate <> '0000-00-00' AND termdate <= CURDATE() THEN 1 ELSE 0 END) AS terminations
+    FROM 
+        hr
+    WHERE age >= 18
+    GROUP BY 
+        YEAR(hire_date)
+) subquery
+ORDER BY 
+    year ASC;
+___________________________________________________________________________________________________
+12. What is the tenure distribution for each department?
+
+SELECT department, ROUND(AVG(DATEDIFF(CURDATE(), termdate)/365),0) as avg_tenure
+FROM hrm
+WHERE termdate <= CURDATE() AND termdate <> '0000-00-00' AND age >= 18
+GROUP BY department;
+-------------------------------------------------------------------------------------------------
+dept           avg_tenure
+Engineering	       8
+Services	       7
+Human Resources	       8
+Business Development   8
+Sales	               7
+Auditing	       9
+Training	       8
+Accounting	       8
+Research and Development 8
+Product Management	8
+Support	                8
+Legal	                9
+Marketing	        7
+
+
+
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+
+Insights
+-------------------------------------------------------------------------------------------------------------------
+There are more male employees
+The youngest employee is 20 years old and the oldest is 57 years old
+3 age groups were created (18-35, 35-54,55+). A large number of employees were between 18-35 followed by 36-55 while the smallest group was 55+.
+A large number of employees work at the headquarters versus remotely.
+The average length of employment for terminated employees is around 8 years.
+The gender distribution across departments is fairly balanced but there are generally more male than female employees.
+The Marketing department has the highest turnover rate followed by Training. The least turn over rate are in the Research and development, Support and Legal departments.
+A large number of employees come from the state of Ohio.
+The net change in employees has increased over the years.
+The average tenure for each department is about 8 years with Legal and Auditing having the highest and Services, Sales and Marketing having the lowest.
++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+Limitations
+
+Some termdates were far into the future and were not included in the analysis(1599 records). The only term dates used were those less than or equal to the current date.
+
+                   *****************************
